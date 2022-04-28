@@ -41,8 +41,6 @@
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
-#pragma message("Value of XSIMD_IMPL=" XSTR(XSIMD_IMPL))
-#pragma message("Value of XSIMD_WITH_NEON64=" XSTR(XSIMD_WITH_NEON64))
 
 namespace xsimd
 {
@@ -109,6 +107,10 @@ using current_arch = neon64;
 #ifndef XSIMD_UNIVERSAL_BUILD_PASS
 #define XSIMD_UNIVERSAL_BUILD_PASS 0
 #endif
+
+#pragma message("Value of XSIMD_IMPL=" XSTR(XSIMD_IMPL))
+#pragma message("Value of XSIMD_WITH_NEON64=" XSTR(XSIMD_WITH_NEON64))
+#pragma message("Value of XSIMD_UNIVERSAL_BUILD_PASS=" XSTR(XSIMD_UNIVERSAL_BUILD_PASS))
 
 #undef Scalar
 #undef SSE2
