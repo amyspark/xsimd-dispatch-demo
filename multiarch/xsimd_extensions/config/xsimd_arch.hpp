@@ -39,6 +39,11 @@
 #define IMPL_MASK 0xFFF00000
 #define PLATFORM_MASK 0xF00000000
 
+#define XSTR(x) STR(x)
+#define STR(x) #x
+#pragma message("Value of XSIMD_IMPL=" XSTR(XSIMD_IMPL))
+#pragma message("Value of XSIMD_WITH_NEON64=" XSTR(XSIMD_WITH_NEON64))
+
 namespace xsimd
 {
 #if !defined(HAVE_XSIMD) || defined(XSIMD_IMPL) && (XSIMD_IMPL & IMPL_MASK) == Scalar
