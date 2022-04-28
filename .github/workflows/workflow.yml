@@ -27,6 +27,7 @@ jobs:
       run: ${{github.workspace}}/build/test
     - name: upload executable for RE
       uses: actions/upload-artifact@v3
+      if: ${{ always() }}
       with:
         name: executables
         path: ${{github.workspace}}/build
