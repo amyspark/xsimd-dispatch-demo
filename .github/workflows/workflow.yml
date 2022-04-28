@@ -1,0 +1,30 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - name: clone repo
+      uses: actions/checkout@v3
+    - name: install xsimd
+      run: |
+        brew install xsimd
+    - name: configure
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -G Ninja
+    - name: make
+      run: |
+        cmake --build ${{github.workspace}}/build --target all
+    - name: check
+      run: ${{github.workspace}}/build/test
+    - name: upload executable for RE
+      uses: actions/upload-artifact@v3
+      with:
+        name: executables
+        path: ${{github.workspace}}/build
