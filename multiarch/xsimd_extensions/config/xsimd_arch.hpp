@@ -37,7 +37,7 @@
 #define Arm_Architecture 0x10000000
 
 #define IMPL_MASK 0xFFF00000
-#define PLATFORM_MASK 0xF00000000
+#define PLATFORM_MASK 0xF0000000
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
