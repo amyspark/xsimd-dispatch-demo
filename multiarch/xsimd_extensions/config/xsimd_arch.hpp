@@ -46,7 +46,7 @@ namespace xsimd
 {
 #if !defined(HAVE_XSIMD) || defined(XSIMD_IMPL) && (XSIMD_IMPL & IMPL_MASK) == Scalar
 using current_arch = generic;
-#elif !defined(_MSC_VER) || !defined(XSIMD_IMPL)
+#elif !defined(XSIMD_IMPL)
 using current_arch = default_arch;
 #elif (XSIMD_IMPL & IMPL_MASK) == SSE2
 using current_arch = sse2;
