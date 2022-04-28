@@ -5,8 +5,8 @@ int main()
   const auto best_arch = xsimd::available_architectures().best;
 
 #ifdef XSIMD_WITH_SSE2
-  if (xsimd::fma3<xsimd::avx2>::version() <= best_arch) {
-    return test<xsimd::fma3<xsimd::avx2>>();
+  if (xsimd::avx2::version() <= best_arch) {
+    return test<xsimd::avx2>();
   } else if (xsimd::avx::version() <= best_arch) {
     return test<xsimd::avx>();
   } else if (xsimd::sse4_1::version() <= best_arch) {
