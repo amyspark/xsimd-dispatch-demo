@@ -97,7 +97,7 @@ using current_arch = neon64;
 #define XSIMD_UNIVERSAL_BUILD_PASS 1
 #elif XSIMD_WITH_SSE2 && (XSIMD_IMPL & PLATFORM_MASK) == Intel_Architecture
 #define XSIMD_UNIVERSAL_BUILD_PASS 1
-#elif XSIMD_WITH_NEON && (XSIMD_IMPL & PLATFORM_MASK) == Arm_Architecture
+#elif (XSIMD_WITH_NEON || XSIMD_WITH_NEON64) && (XSIMD_IMPL & PLATFORM_MASK) == Arm_Architecture
 #define XSIMD_UNIVERSAL_BUILD_PASS 1
 #endif
 
