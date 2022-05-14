@@ -88,23 +88,6 @@ using current_arch = neon64;
 #endif
 }; // namespace xsimd
 
-// xsimd extension to block AppleClang's auto-lipoization of
-// compiled objects.
-// If the defined instruction sets don't match what's expected
-// from the build flags, zonk out the included file.
-
-#if !defined(HAVE_XSIMD) || !defined(XSIMD_IMPL) || defined(XSIMD_IMPL) && (XSIMD_IMPL & IMPL_MASK) == Scalar
-#define XSIMD_UNIVERSAL_BUILD_PASS 3
-#elif XSIMD_WITH_SSE2 && (XSIMD_IMPL & PLATFORM_MASK) == Intel_Architecture
-#define XSIMD_UNIVERSAL_BUILD_PASS 2
-#elif (XSIMD_WITH_NEON || XSIMD_WITH_NEON64) && (XSIMD_IMPL & PLATFORM_MASK) == Arm_Architecture
-#define XSIMD_UNIVERSAL_BUILD_PASS 1
-#endif
-
-#ifndef XSIMD_UNIVERSAL_BUILD_PASS
-#define XSIMD_UNIVERSAL_BUILD_PASS 0
-#endif
-
 #undef Scalar
 #undef SSE2
 #undef SSE3
