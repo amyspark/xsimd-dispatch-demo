@@ -39,9 +39,6 @@
 #define IMPL_MASK 0xFFF00000
 #define PLATFORM_MASK 0xF0000000
 
-#define XSTR(x) STR(x)
-#define STR(x) #x
-
 namespace xsimd
 {
 #if !defined(HAVE_XSIMD) || defined(XSIMD_IMPL) && (XSIMD_IMPL & IMPL_MASK) == Scalar
@@ -96,7 +93,6 @@ using current_arch = neon64;
 // If the defined instruction sets don't match what's expected
 // from the build flags, zonk out the included file.
 
-#define XSIMD_UNIVERSAL_ARCH_CHECK XSIMD_IMPL & PLATFORM_MASK
 #if !defined(HAVE_XSIMD) || !defined(XSIMD_IMPL) || defined(XSIMD_IMPL) && (XSIMD_IMPL & IMPL_MASK) == Scalar
 #define XSIMD_UNIVERSAL_BUILD_PASS 3
 #elif XSIMD_WITH_SSE2 && (XSIMD_IMPL & PLATFORM_MASK) == Intel_Architecture
@@ -108,11 +104,6 @@ using current_arch = neon64;
 #ifndef XSIMD_UNIVERSAL_BUILD_PASS
 #define XSIMD_UNIVERSAL_BUILD_PASS 0
 #endif
-
-#pragma message("Value of XSIMD_IMPL=" XSTR(XSIMD_IMPL))
-#pragma message("Value of XSIMD_WITH_NEON64=" XSTR(XSIMD_WITH_NEON64))
-#pragma message("Value of XSIMD_UNIVERSAL_BUILD_PASS=" XSTR(XSIMD_UNIVERSAL_BUILD_PASS))
-#pragma message("Value of XSIMD_UNIVERSAL_ARCH_CHECK=" XSTR(XSIMD_UNIVERSAL_ARCH_CHECK))
 
 #undef Scalar
 #undef SSE2

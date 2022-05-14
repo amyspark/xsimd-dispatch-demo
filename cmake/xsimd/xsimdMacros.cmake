@@ -110,7 +110,7 @@ macro(xsimd_set_available_architectures)
          list(APPEND _archs "x86")
       endif()
 
-      if("x86-64" IN_LIST CMAKE_OSX_ARCHITECTURES)
+      if("x86-64" IN_LIST CMAKE_OSX_ARCHITECTURES OR "x86_64" IN_LIST CMAKE_OSX_ARCHITECTURES)
          list(APPEND _archs "x86-64")
       endif()
    endif()
