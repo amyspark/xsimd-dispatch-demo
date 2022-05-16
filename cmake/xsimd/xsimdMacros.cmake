@@ -76,49 +76,43 @@ endmacro()
 # Sets a list of the available architectures.
 macro(xsimd_set_available_architectures)
    set(_archs)
-   set(_X86_ALIASES x86 i386 i686)
-   set(_AMD64_ALIASES x86_64 amd64 x86-64)
-   set(_ARM_ALIASES armv6l armv7l)
-   set(_ARM64_ALIASES arm64 arm64e aarch64)
 
-   if (NOT CMAKE_OSX_ARCHITECTURES)
-      string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _SYSPROC)
-
-      list(FIND _X86_ALIASES "${_SYSPROC}" _X86MATCH)
-      list(FIND _AMD64_ALIASES "${_SYSPROC}" _AMD64MATCH)
-      list(FIND _ARM_ALIASES "${_SYSPROC}" _ARMMATCH)
-      list(FIND _ARM64_ALIASES "${_SYSPROC}" _ARM64MATCH)
-
-      if(_X86MATCH GREATER -1)
-         list(APPEND _archs "x86")
-      elseif(_AMD64MATCH GREATER -1)
+   if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "^(x86_64|amd64|AMD64|x86|i?86)$")
+      if (CMAKE_SIZEOF_VOID_P EQUAL 8)
          list(APPEND _archs "x86-64")
-      elseif(_ARMMATCH GREATER -1)
-         list(APPEND _archs "arm")
-      elseif(_ARM64MATCH GREATER -1)
-         list(APPEND _archs "aarch64")
       else()
-         message(WARNING "Unknown processor:" ${CMAKE_SYSTEM_PROCESSOR})
+         list(APPEND _archs "x86")
       endif()
+   elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm")
+      list(APPEND _archs "arm")
+   elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv6")
+      list(APPEND _archs "arm")
+   elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7-a")
+      list(APPEND _archs "arm")
+   elseif (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
+      list(APPEND _archs "aarch64")
    else()
-      # Now handle CMAKE_OSX_ARCHITECTURES for lipoization.
-      foreach(_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
-         message(STATUS "${_arch} ${CMAKE_OSX_ARCHITECTURES}")
-         list(FIND _X86_ALIASES "${_arch}" _X86MATCH)
-         list(FIND _AMD64_ALIASES "${_arch}" _AMD64MATCH)
-         list(FIND _ARM_ALIASES "${_arch}" _ARMMATCH)
-         list(FIND _ARM64_ALIASES "${_arch}" _ARM64MATCH)
+      message(WARNING "Unknown processor:" ${CMAKE_SYSTEM_PROCESSOR})
+   endif()
 
-         if(_X86MATCH GREATER -1)
-            list(APPEND _archs "x86")
-         elseif(_AMD64MATCH GREATER -1)
-            list(APPEND _archs "x86-64")
-         elseif(_ARMMATCH GREATER -1)
-            list(APPEND _archs "arm")
-         elseif(_ARM64MATCH GREATER -1)
-            list(APPEND _archs "aarch64")
-         endif()
-      endforeach()
+   if (APPLE)
+      # Now handle CMAKE_OSX_ARCHITECTURES for lipoization.
+      if (CMAKE_OSX_ARCHITECTURES MATCHES "(arm64|aarch64)")
+         list(APPEND _archs "aarch64")
+      endif()
+
+      if ("arm" IN_LIST CMAKE_OSX_ARCHITECTURES
+         OR "armeb" IN_LIST CMAKE_OSX_ARCHITECTURES)
+         list(APPEND _archs "arm")
+      endif()
+
+      if("x86" IN_LIST CMAKE_OSX_ARCHITECTURES)
+         list(APPEND _archs "x86")
+      endif()
+
+      if("x86-64" IN_LIST CMAKE_OSX_ARCHITECTURES OR "x86_64" IN_LIST CMAKE_OSX_ARCHITECTURES)
+         list(APPEND _archs "x86-64")
+      endif()
    endif()
 
    set(XSIMD_ARCH "${_archs}" CACHE STRING "Define the available architectures for xsimd.")
@@ -160,7 +154,7 @@ macro(xsimd_set_preferred_compiler_flags)
 endmacro()
 
 # helper macro for xsimd_compile_for_all_implementations
-macro(_xsimd_compile_one_implementation _srcs _impl _type)
+macro(_xsimd_compile_one_implementation _srcs _impl)
    list(FIND _disabled_targets "${_impl}" _disabled_index)
    list(FIND _only_targets "${_impl}" _only_index)
    if(${_disabled_index} GREATER -1)
@@ -216,14 +210,6 @@ macro(_xsimd_compile_one_implementation _srcs _impl _type)
             COMPILE_FLAGS "${_flags} ${_extra_flags}"
             COMPILE_DEFINITIONS "XSIMD_IMPL=${_impl}"
          )
-         if (CMAKE_OSX_ARCHITECTURES) # Let's ban AppleClang at the source
-            if("${_type}" STREQUAL "x86-64"
-               OR "${_type}" STREQUAL "aarch64")
-               set_source_files_properties( "${_out}" PROPERTIES
-                  OSX_ARCHITECTURES "${_type}"
-               )
-            endif()
-         endif()
          list(APPEND ${_srcs} "${_out}")
       endif()
    endif()
@@ -276,52 +262,46 @@ macro(xsimd_compile_for_all_implementations _srcs _src)
    ## its intrinsics are available but they are not detectable.
 
    _xsimd_compile_one_implementation(${_srcs} Scalar
-      NO_ARCH NO_FLAG)
+      NO_FLAG)
 
    if("aarch64" IN_LIST XSIMD_ARCH)
-      _xsimd_compile_one_implementation(${_srcs} NEON64 aarch64 NO_FLAG)
+      _xsimd_compile_one_implementation(${_srcs} NEON64 NO_FLAG)
    endif()
 
    if ("arm" IN_LIST XSIMD_ARCH)
-      _xsimd_compile_one_implementation(${_srcs} NEON arm 
-         "-mfpu=neon" NO_FLAG)
+      _xsimd_compile_one_implementation(${_srcs} NEON
+         "-mfpu=neon")
    endif()
    if ("x86" IN_LIST XSIMD_ARCH OR "x86-64" IN_LIST XSIMD_ARCH)
-      list(FIND XSIMD_ARCH "x86" _X86MATCH)
-      if (_x86MATCH GREATER -1)
-         set(_arch "x86")
-      else()
-         set(_arch "x86-64")
-      endif()
-      _xsimd_compile_one_implementation(${_srcs} SSE2 "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} SSE2
          "-msse2"         "/arch:SSE2")
-      _xsimd_compile_one_implementation(${_srcs} SSE3 "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} SSE3
          "-msse3"         "/arch:SSE2")
-      _xsimd_compile_one_implementation(${_srcs} SSSE3 "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} SSSE3
          "-mssse3"        "/arch:SSE2")
-      _xsimd_compile_one_implementation(${_srcs} SSE4_1 "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} SSE4_1
          "-msse4.1"       "/arch:SSE2")
-      _xsimd_compile_one_implementation(${_srcs} SSE4_2 "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} SSE4_2
          "-msse4.2"       "/arch:SSE2")
-      _xsimd_compile_one_implementation(${_srcs} SSE4_2+FMA "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} SSE4_2+FMA
          "-msse4.2 -mfma" "/arch:AVX")
-      _xsimd_compile_one_implementation(${_srcs} FMA4 "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} FMA4
          "-mfma4"         "/arch:AVX")
-      _xsimd_compile_one_implementation(${_srcs} AVX "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX
          "-mavx"          "/arch:AVX")
-      _xsimd_compile_one_implementation(${_srcs} AVX+FMA "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX+FMA
          "-mavx -mfma"    "/arch:AVX")
-      _xsimd_compile_one_implementation(${_srcs} AVX2 "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX2
          "-mavx2"         "/arch:AVX2")
-      _xsimd_compile_one_implementation(${_srcs} AVX2+FMA "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX2+FMA
          "-mavx2 -mfma"   "/arch:AVX2")
-      _xsimd_compile_one_implementation(${_srcs} AVX512F "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX512F
          "-mavx512f"      "/arch:AVX512")
-      _xsimd_compile_one_implementation(${_srcs} AVX512BW "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX512BW
          "-mavx512bw"     "/arch:AVX512")
-      _xsimd_compile_one_implementation(${_srcs} AVX512CD "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX512CD
          "-mavx512cd"     "/arch:AVX512")
-      _xsimd_compile_one_implementation(${_srcs} AVX512DQ "${_arch}"
+      _xsimd_compile_one_implementation(${_srcs} AVX512DQ
          "-mavx512dq"     "/arch:AVX512")
    endif()
    list(LENGTH _only_targets _len)
